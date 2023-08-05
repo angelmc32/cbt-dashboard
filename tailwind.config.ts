@@ -10,7 +10,7 @@ export default {
     extend: {
       colors: {
         poc_blueDarkOxford: "#06112F",
-        poc_whiteAlmost: "#FFFDF5",
+        poc_whiteAlmost: "#fffdf5",
         poc_yellowPrimary: {
           100: "#ffe180",
           200: "#ffdb66",

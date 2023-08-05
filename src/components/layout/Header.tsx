@@ -8,7 +8,6 @@ const navigation = [
   { name: "Home", href: "/", onlyMobile: true },
   { name: "How it works?", href: "/how-it-works", onlyMobile: false },
   { name: "Communities", href: "/communities", onlyMobile: false },
-  { name: "Leaderboard", href: "/leaderboard", onlyMobile: false },
 ];
 
 function classNames(...classes: string[]) {
@@ -31,12 +30,12 @@ const Header = () => {
               <div className="flex">
                 <Link className="flex flex-shrink-0 items-center" href="/">
                   <LogoComponent />
-                  <span className="hidden md:block ml-2 text-xl font-medium text-white hover:text-primary">
+                  <span className="ml-2 text-lg md:text-xl font-medium text-white hover:text-primary">
                     Proof of Community
                   </span>
                 </Link>
               </div>
-              <div className="hidden md:ml-6 md:flex md:items-center md:space-x-4">
+              <div className="hidden md:ml-6 md:flex md:items-center md:space-x-2 lg:space-x-4">
                 {navigation.map(
                   (item) =>
                     !item.onlyMobile && (
@@ -59,29 +58,29 @@ const Header = () => {
                 )}
                 <div className="hidden items-center md:flex">
                   <div className="flex-shrink-0">
-                    <Link href="/gm">
+                    <Link href="/join">
                       <button
                         type="button"
-                        className="relative inline-flex items-center gap-x-1.5 rounded-md bg-poc_yellowPrimary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-poc_yellowPrimary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_yellowPrimary-600"
+                        className="relative inline-flex items-center gap-x-1.5 rounded-md bg-poc_yellowPrimary-600 px-6 py-2 text-base font-medium text-white shadow-sm hover:bg-poc_yellowPrimary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_yellowPrimary-600"
                       >
-                        Dashboard
+                        Join!
                       </button>
                     </Link>
                   </div>
                 </div>
               </div>
-              <div className="-ml-2 mr-2 flex items-center md:hidden">
+              <div className="flex items-center md:hidden">
                 {/* Mobile menu button */}
-                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-1 text-white hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary">
+                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-0 text-white hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary">
                   <span className="sr-only">Open main menu</span>
                   {open ? (
                     <XMarkIcon
-                      className="block h-8 w-8 p-1"
+                      className="block h-9 w-9 p-1"
                       aria-hidden="true"
                     />
                   ) : (
                     <Bars3Icon
-                      className="block h-8 w-8 p-1"
+                      className="block h-9 w-9 p-1"
                       aria-hidden="true"
                     />
                   )}
