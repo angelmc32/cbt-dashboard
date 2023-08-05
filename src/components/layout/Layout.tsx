@@ -13,15 +13,14 @@ const Layout = ({ children }: TLayoutProps) => {
   return (
     <>
       <Head>
-        <title>La DAO</title>
+        <title>Proof of Community</title>
         <meta
           name="description"
-          content="Creado por La DAO para la comunidad Web3"
+          content="Connect with your members and boost your engagement"
         />
-        <link rel="icon" href="/ladao.svg" />
+        <link rel="icon" href="/images/logos/logo-proof-of-community-white-256.png" />
       </Head>
       <Header />
-      {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
       <main className={`flex w-full items-center bg-poc_blueDarkOxford ${styles.main}`}>
         {children}
       </main>

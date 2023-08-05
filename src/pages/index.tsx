@@ -1,6 +1,4 @@
 import { signIn, signOut, useSession } from "next-auth/react";
-import Head from "next/head";
-import Link from "next/link";
 import Hero from "~/components/landing/Hero";
 import { api } from "~/utils/api";
 
