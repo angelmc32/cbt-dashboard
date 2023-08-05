@@ -1,4 +1,4 @@
-# Community Bound Token Dashboard
+# Proof of Community
 
 Onboard and engage with your community members with on-chain rewards.
 
