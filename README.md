@@ -12,6 +12,9 @@ If you are not familiar with the different technologies used in this project, pl
 
 - [Next.js](https://nextjs.org)
 - [NextAuth.js](https://next-auth.js.org)
+- [Sign-In with Ethereum](https://login.xyz/)
+- [Wagmi](https://wagmi.sh/)
+- [RainbowKit](https://www.rainbowkit.com/)
 - [Prisma](https://prisma.io)
 - [Tailwind CSS](https://tailwindcss.com)
 - [tRPC](https://trpc.io)
