@@ -81,12 +81,10 @@ export const authOptions: (ctxReq: CtxOrReq) => NextAuthOptions = ({
             JSON.parse(credentials?.message ?? "{}") as Partial<SiweMessage>
           );
           const nonce = await getCsrfToken({ req: { headers: req?.headers } });
-          const nextAuthUrl = new URL(process.env.NEXTAUTH_URL!);
+          const nextAuthUrl = new URL(env.NEXTAUTH_URL);
           // const nextAuthUrl = new URL(
           //   "https://" + process.env.NEXT_PUBLIC_VERCEL_URL!
           // );
-
-          console.log(nextAuthUrl);
 
           const result = await siwe.verify({
             signature: credentials?.signature ?? "",
