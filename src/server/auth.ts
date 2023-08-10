@@ -12,7 +12,7 @@ import { SiweMessage } from "siwe";
 
 // import { prisma } from "~/server/db";
 // import { PrismaAdapter } from "@next-auth/prisma-adapter";
-// import { env } from "~/env.mjs";
+import { env } from "~/env.mjs";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -81,7 +81,8 @@ export const authOptions: (ctxReq: CtxOrReq) => NextAuthOptions = ({
             JSON.parse(credentials?.message ?? "{}") as Partial<SiweMessage>
           );
           const nonce = await getCsrfToken({ req: { headers: req?.headers } });
-          const nextAuthUrl = new URL(process.env.NEXTAUTH_URL!);
+          // const nextAuthUrl = new URL(process.env.NEXTAUTH_URL!);
+          const nextAuthUrl = new URL(env.NEXTAUTH_URL);
 
           const result = await siwe.verify({
             signature: credentials?.signature ?? "",

@@ -42,7 +42,7 @@ const AuthShowcase: React.FC = () => {
       const message = new SiweMessage({
         domain: window.location.host,
         address: address,
-        statement: "Sign in with Ethereum to the app.",
+        statement: "Sign in with Ethereum to Proof of Community.",
         uri: window.location.origin,
         version: "1",
         chainId: chain?.id,
