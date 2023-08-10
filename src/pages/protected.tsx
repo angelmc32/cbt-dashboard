@@ -11,7 +11,6 @@ import {
   useNetwork,
 } from "wagmi";
 import { InjectedConnector } from "wagmi/connectors/injected";
-import { env } from "~/env.mjs";
 
 // Auth Component
 // ========================================================
@@ -34,12 +33,19 @@ const AuthShowcase: React.FC = () => {
   const { disconnect } = useDisconnect();
   const { chain } = useNetwork();
 
+  const logEnvVariable = () => {
+    try {
+      console.log("calling env variable");
+      console.log(process.env.NEXT_PUBLIC_VERCEL_URL);
+    } catch (e) {
+      console.error(e);
+    }
+  };
   // Functions
   /**
    * Attempts SIWE and establish session
    */
   const onClickSignIn = async () => {
-    console.log(process.env.NEXT_PUBLIC_VERCEL_URL);
     try {
       const message = new SiweMessage({
         domain: window.location.host,
@@ -140,6 +146,12 @@ const AuthShowcase: React.FC = () => {
           </button>
         </div>
       ) : null}
+      <button
+        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+        onClick={logEnvVariable}
+      >
+        Sign In
+      </button>
     </div>
   );
 };
