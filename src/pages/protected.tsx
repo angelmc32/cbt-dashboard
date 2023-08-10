@@ -12,8 +12,6 @@ import {
 } from "wagmi";
 import { InjectedConnector } from "wagmi/connectors/injected";
 
-import { env } from "~/env.mjs";
-
 // Auth Component
 // ========================================================
 const AuthShowcase: React.FC = () => {
