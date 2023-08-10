@@ -1,13 +1,18 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { type GetServerSidePropsContext } from "next";
 import {
   getServerSession,
   type NextAuthOptions,
   type DefaultSession,
+  type Session,
 } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
-import { env } from "~/env.mjs";
-import { prisma } from "~/server/db";
+import { type CtxOrReq } from "next-auth/client/_utils";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { getCsrfToken } from "next-auth/react";
+import { SiweMessage } from "siwe";
+
+// import { prisma } from "~/server/db";
+// import { PrismaAdapter } from "@next-auth/prisma-adapter";
+// import { env } from "~/env.mjs";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -35,22 +40,71 @@ declare module "next-auth" {
  *
  * @see https://next-auth.js.org/configuration/options
  */
-export const authOptions: NextAuthOptions = {
+export const authOptions: (ctxReq: CtxOrReq) => NextAuthOptions = ({
+  req,
+}) => ({
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
+    // token.sub will refer to the id of the wallet address
+    session: ({ session, token }) =>
+      ({
+        ...session,
+        user: {
+          ...session.user,
+          id: token.sub, // user's wallet address
+        },
+      } as Session & { user: { id: string } }),
+  },
+  providers: [
+    CredentialsProvider({
+      // ! Don't add this
+      // - it will assume more than one auth provider
+      // - and redirect to a sign-in page meant for oauth
+      // - id: 'siwe',
+      name: "Ethereum",
+      type: "credentials", // default for Credentials
+      // Default values if it was a form
+      credentials: {
+        message: {
+          label: "Message",
+          type: "text",
+          placeholder: "0x0",
+        },
+        signature: {
+          label: "Signature",
+          type: "text",
+          placeholder: "0x0",
+        },
+      },
+      authorize: async (credentials) => {
+        try {
+          const siwe = new SiweMessage(
+            JSON.parse(credentials?.message ?? "{}") as Partial<SiweMessage>
+          );
+          const nonce = await getCsrfToken({ req: { headers: req?.headers } });
+          const nextAuthUrl = new URL(process.env.NEXTAUTH_URL!);
+
+          const result = await siwe.verify({
+            signature: credentials?.signature ?? "",
+            domain: nextAuthUrl.host,
+            nonce,
+          });
+
+          if (result.success) {
+            return {
+              id: siwe.address,
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error({ error });
+          return null;
+        }
       },
     }),
-  },
-  adapter: PrismaAdapter(prisma),
-  providers: [
-    DiscordProvider({
-      clientId: env.DISCORD_CLIENT_ID,
-      clientSecret: env.DISCORD_CLIENT_SECRET,
-    }),
+    // DiscordProvider({
+    //   clientId: env.DISCORD_CLIENT_ID,
+    //   clientSecret: env.DISCORD_CLIENT_SECRET,
+    // }),
     /**
      * ...add more providers here.
      *
@@ -61,16 +115,18 @@ export const authOptions: NextAuthOptions = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
-};
+});
 
 /**
  * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
  *
  * @see https://next-auth.js.org/configuration/nextjs
  */
-export const getServerAuthSession = (ctx: {
+export const getServerAuthSession = async (ctx: {
   req: GetServerSidePropsContext["req"];
   res: GetServerSidePropsContext["res"];
 }) => {
-  return getServerSession(ctx.req, ctx.res, authOptions);
+  // Changed from authOptions to authOption(ctx)
+  // This allows use to retrieve the csrf token to verify as the nonce
+  return getServerSession(ctx.req, ctx.res, authOptions(ctx));
 };
