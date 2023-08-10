@@ -39,7 +39,7 @@ const AuthShowcase: React.FC = () => {
    * Attempts SIWE and establish session
    */
   const onClickSignIn = async () => {
-    console.log(env.NEXTAUTH_URL);
+    console.log(process.env.NEXT_PUBLIC_VERCEL_URL);
     try {
       const message = new SiweMessage({
         domain: window.location.host,
