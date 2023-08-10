@@ -11,6 +11,7 @@ import {
   useNetwork,
 } from "wagmi";
 import { InjectedConnector } from "wagmi/connectors/injected";
+import { env } from "~/env.mjs";
 
 // Auth Component
 // ========================================================
@@ -38,6 +39,7 @@ const AuthShowcase: React.FC = () => {
    * Attempts SIWE and establish session
    */
   const onClickSignIn = async () => {
+    console.log(env.NEXTAUTH_URL);
     try {
       const message = new SiweMessage({
         domain: window.location.host,
