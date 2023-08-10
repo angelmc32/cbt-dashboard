@@ -12,6 +12,8 @@ import {
 } from "wagmi";
 import { InjectedConnector } from "wagmi/connectors/injected";
 
+import { env } from "~/env.mjs";
+
 // Auth Component
 // ========================================================
 const AuthShowcase: React.FC = () => {
@@ -36,7 +38,8 @@ const AuthShowcase: React.FC = () => {
   const logEnvVariable = () => {
     try {
       console.log("calling env variable");
-      console.log(process.env.NEXT_PUBLIC_VERCEL_URL);
+      const nextAuthUrl = new URL(process.env.NEXT_PUBLIC_VERCEL_URL!);
+      console.log(nextAuthUrl);
     } catch (e) {
       console.error(e);
     }
