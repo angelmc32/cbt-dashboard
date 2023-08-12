@@ -8,11 +8,18 @@ import {
 import { ethers } from "ethers";
 import { useAccount } from "wagmi";
 
+import CreateForm from "~/components/community/CreateForm";
+import { MinimalistConnectButton } from "~/components/web3/RainbowKitCustomConnectButton";
+
 const Create = () => {
-  const [safeSdk, setSafeSdk] = useState<unknown>(null);
-  const [hasLoaded, setHasLoaded] = useState(false);
   const [ethereumObj, setEthereumObj] = useState<ExternalProvider | null>(null);
-  const { address, isConnected } = useAccount();
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [nftImage, setNftImage] = useState<(File & { preview: string }) | null>(
+    null
+  );
+  const [safeSdk, setSafeSdk] = useState<unknown>(null);
+
+  const { address: userAddress } = useAccount();
   // const provider = useEthersProvider({ chainId: 5 });
 
   useEffect(() => {
@@ -23,7 +30,7 @@ const Create = () => {
   }, [hasLoaded]);
 
   const createCommunityWallet = async () => {
-    if (!address || !ethereumObj) return;
+    if (!userAddress || !ethereumObj) return;
 
     const provider = new ethers.providers.Web3Provider(ethereumObj);
     const accounts = (await ethereumObj.request?.({
@@ -42,7 +49,7 @@ const Create = () => {
       console.log(ethAdapter.getSigner());
       console.log(ethAdapter);
       const safeAccountConfig: SafeAccountConfig = {
-        owners: [address, "0x752c9459Bb3A76caFF270bbe7b8e20A71A67648A"],
+        owners: [userAddress, "0x752c9459Bb3A76caFF270bbe7b8e20A71A67648A"],
         threshold: 1,
       };
       const safeFactory = await SafeFactory.create({
@@ -75,14 +82,36 @@ const Create = () => {
     }
   };
 
-  const logSdkObj = () => console.log(safeSdk);
+  const uploadImage = () => {
+    console.log("uploading image to Supabase");
+    return;
+  };
+
+  const uploadMetadata = () => {
+    console.log("uploading image to Supabase");
+    return;
+  };
+
+  const deployCommunityNFT = () => {
+    console.log("uploading image to Supabase");
+    return;
+  };
+
+  const onSubmitHandler = async () => {
+    const communityWalletAddress = await createCommunityWallet();
+
+    const imgUri = uploadImage();
+    const metadataUri = uploadMetadata();
+
+    const communityMembershipAddress = deployCommunityNFT();
+  };
 
   return (
     <div className="page">
       <h1 className="mb-8 text-center text-poc_yellowPrimary-700">
         Create Community
       </h1>
-      <div className="flex gap-x-4">
+      {/* <div className="flex gap-x-4">
         <button className="btn btn-sm rounded-md" onClick={logSdkObj}>
           Log SDK obj
         </button>
@@ -94,7 +123,16 @@ const Create = () => {
             Create Wallet
           </button>
         )}
-      </div>
+      </div> */}
+      {!userAddress ? (
+        <MinimalistConnectButton connectBtnClasses="w-full rounded-md bg-poc_yellowPrimary-600 py-2 px-6 font-spaceGrotesk text-base font-medium text-white hover:bg-poc_yellowPrimary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_yellowPrimary-600 md:text-lg" />
+      ) : (
+        <CreateForm
+          nftImage={nftImage}
+          setNftImage={setNftImage}
+          onSubmitHandler={onSubmitHandler}
+        />
+      )}
     </div>
   );
 };

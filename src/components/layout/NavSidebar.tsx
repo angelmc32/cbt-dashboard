@@ -89,7 +89,7 @@ const NavSidebar = ({
                                 <MinimalistConnectButton
                                   accountBtnClasses="text-md flex w-3/5 items-center justify-between rounded-md border-2 border-poc_blueSecondary-700 bg-transparent px-4 py-2 font-spaceGrotesk font-medium text-poc_blueSecondary-700 hover:bg-poc_whiteAlmost focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_blueSecondary-700 md:text-lg"
                                   accountContainerClasses="flex w-full justify-center items-center gap-x-4"
-                                  chainClasses="flex w-auto items-center text-xs text-poc_blueSecondary"
+                                  chainClasses="flex w-auto items-center text-base text-poc_blueSecondary"
                                   containerClasses="w-full my-8 flex justify-center"
                                   connectBtnText="Connect wallet"
                                   connectBtnClasses="text-md w-2/3 rounded-md bg-poc_blueSecondary-700 py-2 px-5 font-spaceGrotesk font-medium text-white hover:bg-poc_yellowPrimary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_yellowPrimary-600"
