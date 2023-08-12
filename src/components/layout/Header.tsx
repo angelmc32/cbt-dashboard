@@ -1,13 +1,18 @@
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { Disclosure } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon } from "@heroicons/react/24/outline";
 import LogoComponent from "../common/LogoComponent";
 import Link from "next/link";
+import { MinimalistConnectButton } from "../web3/RainbowKitCustomConnectButton";
+import NavSidebar from "./NavSidebar";
 
 const navigation = [
   { name: "Home", href: "/", onlyMobile: true },
   { name: "How it works?", href: "/how-it-works", onlyMobile: false },
   { name: "Communities", href: "/communities", onlyMobile: false },
+  { name: "Events", href: "/events", onlyMobile: true },
+  { name: "My Feed", href: "/feed", onlyMobile: true },
 ];
 
 function classNames(...classes: string[]) {
@@ -15,22 +20,28 @@ function classNames(...classes: string[]) {
 }
 
 const Header = () => {
+  const [showConnection, setShowConnection] = useState(false);
+
   // TODO: use pathname property once components are added
   const { asPath: pathname } = useRouter();
+
+  useEffect(() => {
+    setShowConnection(true);
+  }, []);
 
   return (
     <Disclosure
       as="nav"
       className="sticky top-0 z-20 h-16 bg-poc_blueDarkOxford font-spaceGrotesk"
     >
-      {({ open, close }) => (
+      {({ open }) => (
         <>
           <div className="mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 justify-between">
               <div className="flex">
                 <Link className="flex flex-shrink-0 items-center" href="/">
                   <LogoComponent />
-                  <span className="ml-2 text-lg md:text-xl font-medium text-white hover:text-primary">
+                  <span className="ml-2 text-lg font-medium text-white hover:text-primary md:text-xl">
                     Proof of Community
                   </span>
                 </Link>
@@ -56,64 +67,32 @@ const Header = () => {
                       </Link>
                     )
                 )}
-                <div className="hidden items-center md:flex">
-                  <div className="flex-shrink-0">
-                    <Link href="/join">
-                      <button
-                        type="button"
-                        className="relative inline-flex items-center gap-x-1.5 rounded-md bg-poc_yellowPrimary-600 px-6 py-2 text-base font-medium text-white shadow-sm hover:bg-poc_yellowPrimary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_yellowPrimary-600"
-                      >
-                        Join!
-                      </button>
-                    </Link>
+                {showConnection && (
+                  <div className="hidden items-center lg:flex">
+                    <MinimalistConnectButton
+                      accountBtnClasses="text-md flex items-center justify-between rounded-md border-2 border-poc_whiteAlmost-700 bg-transparent px-4 py-2 font-spaceGrotesk font-medium text-poc_blueSecondary-700 hover:bg-poc_blueSecondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_blueSecondary-700 text-poc_whiteAlmost"
+                      connectBtnText="Connect"
+                      connectBtnClasses="text-md w-full rounded-md bg-poc_yellowPrimary-600 py-2 px-5 font-spaceGrotesk font-medium text-white hover:bg-poc_yellowPrimary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_yellowPrimary-600"
+                    />
                   </div>
-                </div>
+                )}
               </div>
-              <div className="flex items-center md:hidden">
+              <div className="flex items-center lg:hidden">
                 {/* Mobile menu button */}
                 <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-0 text-white hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary">
                   <span className="sr-only">Open main menu</span>
-                  {open ? (
-                    <XMarkIcon
-                      className="block h-9 w-9 p-1"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <Bars3Icon
-                      className="block h-9 w-9 p-1"
-                      aria-hidden="true"
-                    />
-                  )}
+                  <Bars3Icon className="block h-9 w-9 p-1" aria-hidden="true" />
                 </Disclosure.Button>
               </div>
             </div>
           </div>
 
-          <Disclosure.Panel className="md:hidden">
-            <div className="absolute w-full space-y-4 bg-poc_blueDarkOxford px-2 pb-8 pt-4 sm:px-3">
-              {navigation.map((item) => (
-                <Disclosure.Button
-                  key={item.name}
-                  as="div"
-                  className={classNames(
-                    item.href === pathname
-                      ? "text-white underline decoration-primary decoration-2 underline-offset-8"
-                      : "text-poc_whiteAlmost hover:bg-gray-700 hover:text-white",
-                    "block w-full rounded-md py-2 pl-12 text-lg font-medium"
-                  )}
-                  aria-current={item.href === pathname ? "page" : undefined}
-                >
-                  <Link
-                    href={item.href}
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-                    onClick={close as any}
-                  >
-                    <p className="w-full">{item.name}</p>
-                  </Link>
-                </Disclosure.Button>
-              ))}
-            </div>
-          </Disclosure.Panel>
+          <NavSidebar
+            showConnection={showConnection}
+            isOpen={open}
+            navLinks={navigation}
+            pathname={pathname}
+          />
         </>
       )}
     </Disclosure>

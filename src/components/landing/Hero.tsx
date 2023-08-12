@@ -13,8 +13,8 @@ const Hero = () => {
           <h1 className="mb-2 ml-4 text-5xl font-bold text-poc_yellowPrimary-500 md:text-7xl md:leading-none">
             Proof of Community
           </h1>
-          <div className="flex mt-8 w-full flex-col items-center gap-x-6 gap-y-6 md:mb-4 md:ml-8 md:mt-4 md:flex-row lg:mt-8 lg:justify-center lg:w-4/5 lg:ml-4">
-            <Link href="/join">
+          <div className="mt-8 flex w-full flex-col items-center gap-x-6 gap-y-6 md:mb-4 md:ml-8 md:mt-4 md:flex-row lg:ml-4 lg:mt-8 lg:w-4/5 lg:justify-center">
+            <Link href="/community/create">
               <PrimaryButton size="xl">Create yours!</PrimaryButton>
             </Link>
             <Link
@@ -28,7 +28,8 @@ const Hero = () => {
           before:ease-in-out before:content-[''] before:hover:scale-x-100"
               >
                 Explore communities
-              </span> <span aria-hidden="true">→</span>
+              </span>{" "}
+              <span aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
