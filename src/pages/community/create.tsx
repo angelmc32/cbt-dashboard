@@ -10,6 +10,7 @@ import { useAccount } from "wagmi";
 
 import CreateForm from "~/components/community/CreateForm";
 import { MinimalistConnectButton } from "~/components/web3/RainbowKitCustomConnectButton";
+import useSupabaseClient from "~/hooks/useSupabaseClient";
 
 const Create = () => {
   const [ethereumObj, setEthereumObj] = useState<ExternalProvider | null>(null);
@@ -20,7 +21,7 @@ const Create = () => {
   const [safeSdk, setSafeSdk] = useState<unknown>(null);
 
   const { address: userAddress } = useAccount();
-  // const provider = useEthersProvider({ chainId: 5 });
+  const { supabase, errorMsg } = useSupabaseClient();
 
   useEffect(() => {
     if (!hasLoaded) {
@@ -82,9 +83,35 @@ const Create = () => {
     }
   };
 
-  const uploadImage = () => {
+  const uploadImage = async () => {
     console.log("uploading image to Supabase");
-    return;
+    if (!supabase) return;
+    if (errorMsg) {
+      console.error(errorMsg);
+      return;
+    }
+    console.log(nftImage);
+    try {
+      const { data, error } = await supabase.storage
+        .from("membership-nft-images")
+        .upload(
+          `public/${"community-test"}/${userAddress}.png`,
+          nftImage as File,
+          {
+            cacheControl: "3600",
+            upsert: false,
+          }
+        );
+      if (error) {
+        console.error(error);
+      } else {
+        console.log("Success!");
+        console.log(data);
+        return data;
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const uploadMetadata = () => {
@@ -100,7 +127,13 @@ const Create = () => {
   const onSubmitHandler = async () => {
     const communityWalletAddress = await createCommunityWallet();
 
-    const imgUri = uploadImage();
+    const imgRes = await uploadImage();
+    if (!imgRes?.path || !supabase) return;
+    const { data: imageUri } = supabase.storage
+      .from("membership-nft-images")
+      .getPublicUrl(imgRes.path);
+
+    console.log(imageUri);
     const metadataUri = uploadMetadata();
 
     const communityMembershipAddress = deployCommunityNFT();

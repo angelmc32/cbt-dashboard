@@ -87,6 +87,7 @@ const CreateForm = ({
         <button
           type="button"
           className="items-center rounded-md bg-poc_yellowPrimary-600 px-8 py-2.5 text-lg font-semibold text-white hover:bg-poc_yellowPrimary-700"
+          disabled={!nftImage?.preview}
           onClick={() => void onSubmitHandler()}
         >
           Create!

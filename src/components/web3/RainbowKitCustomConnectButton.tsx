@@ -27,8 +27,9 @@ export const MinimalistConnectButton = ({
   }, []);
 
   // Render
-  if (!hasMounted) return null;
-  else
+  if (!hasMounted) {
+    return null;
+  } else {
     return (
       <div className={containerClasses}>
         <ConnectButton.Custom>
@@ -150,4 +151,5 @@ export const MinimalistConnectButton = ({
         </ConnectButton.Custom>
       </div>
     );
+  }
 };
