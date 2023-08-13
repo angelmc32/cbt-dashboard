@@ -51,7 +51,7 @@ export const MinimalistConnectButton = ({
                       <button
                         className={
                           connectBtnClasses ??
-                          "w-full rounded-md bg-poc_yellowPrimary-600 py-2 font-spaceGrotesk text-base font-medium text-white hover:bg-poc_yellowPrimary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_yellowPrimary-600 md:text-lg"
+                          "w-full rounded-md bg-poc_yellowPrimary-600 px-4 py-2 font-spaceGrotesk text-base font-medium text-white hover:bg-poc_yellowPrimary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_yellowPrimary-600 md:text-lg"
                         }
                         onClick={openConnectModal}
                         type="button"

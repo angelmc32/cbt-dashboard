@@ -1,6 +1,6 @@
 import React from "react";
 
-const demo = () => {
+const Demo = () => {
   return (
     <div className="page">
       <h1>Demo Community</h1>
@@ -8,4 +8,4 @@ const demo = () => {
   );
 };
 
-export default demo;
+export default Demo;
