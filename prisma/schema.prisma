@@ -14,6 +14,13 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+enum STATUS {
+    DEPLOYED
+    DRAFT
+    ERROR
+    PROCESSING
+}
+
 model SocialMediaUrl {
     id                  String          @id @default(cuid())
     platformName        String          @unique
@@ -25,11 +32,28 @@ model SocialMediaUrl {
 model Community {
     id                  String          @id @default(cuid())
     address             String?         @unique
+    communityContract   CommunityContract?
+    deployedByAddress   String
     name                String          @unique
-    description         String?
+    symbol              String
+    description         String
+    imageUri            String
     urlSocialMedias     SocialMediaUrl[]
     urlWebsite          String?
     users               UsersOnCommunities[]
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+}
+
+model CommunityContract {
+    id                  String          @id @default(cuid())
+    address             String?         @unique
+    deployedByAddress   String
+    name                String
+    symbol              String
+    baseUri             String
+    community           Community       @relation(fields: [communityId], references: [id])
+    communityId         String          @unique
     createdAt           DateTime        @default(now())
     updatedAt           DateTime        @updatedAt
 }
@@ -43,6 +67,28 @@ model UsersOnCommunities {
   assignedBy            String
 
   @@id([userId, communityId])
+}
+
+model NftContract {
+    id                  String          @id @default(cuid())
+    address             String?         @unique
+    deployedByAddress   String
+    name                String
+    symbol              String
+    baseUri             String
+    status              STATUS          @default(DRAFT)
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+}
+
+model NftMetadata {
+    id                  String          @id @default(cuid())
+    name                String
+    description         String
+    imageUrl            String
+    externalUrl         String
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
 }
 
 // Necessary for Next auth

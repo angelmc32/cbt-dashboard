@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type ChangeEvent, useEffect, useState } from "react";
 import { type ExternalProvider } from "@ethersproject/providers";
 import {
   EthersAdapter,
@@ -12,6 +12,9 @@ import CreateForm from "~/components/community/CreateForm";
 import { MinimalistConnectButton } from "~/components/web3/RainbowKitCustomConnectButton";
 import useSupabaseClient from "~/hooks/useSupabaseClient";
 
+import { useSession } from "next-auth/react";
+import { api } from "~/utils/api";
+
 const Create = () => {
   const [ethereumObj, setEthereumObj] = useState<ExternalProvider | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -19,9 +22,33 @@ const Create = () => {
     null
   );
   const [safeSdk, setSafeSdk] = useState<unknown>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
+
+  const [nameInputValue, setNameInputValue] = useState<string>("");
+  const [symbolInputValue, setSymbolInputValue] = useState<string>("");
+  const [descriptionInputValue, setDescriptionInputValue] =
+    useState<string>("");
 
   const { address: userAddress } = useAccount();
   const { supabase, errorMsg } = useSupabaseClient();
+  const { data: sessionData } = useSession();
+
+  const { mutate: createCommunity, isLoading: isSubmitting } =
+    api.communities.create.useMutation({
+      onSuccess: async ({ newCommunity }) => {
+        console.log(newCommunity);
+        console.log("¡Tu comunidad fue registrada exitosamente!");
+        await createCommunityWallet();
+        console.log("¡Tu wallet fue desplegada exitosamente!");
+      },
+      onError: (error: { message: string }) => {
+        console.log(error);
+        const errorMsg = error.message || "Ocurrió un error";
+        setIsLoading(false);
+        console.error(errorMsg);
+      },
+    });
 
   useEffect(() => {
     if (!hasLoaded) {
@@ -95,7 +122,7 @@ const Create = () => {
       const { data, error } = await supabase.storage
         .from("membership-nft-images")
         .upload(
-          `public/${"community-test"}/${userAddress}.png`,
+          `public/${"community-test"}/${userAddress}-1.png`,
           nftImage as File,
           {
             cacheControl: "3600",
@@ -124,19 +151,51 @@ const Create = () => {
     return;
   };
 
-  const onSubmitHandler = async () => {
-    const communityWalletAddress = await createCommunityWallet();
+  const onChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.currentTarget;
+    switch (name) {
+      case "name":
+        setNameInputValue(value);
+        break;
+      case "symbol":
+        setSymbolInputValue(value);
+        break;
+      case "description":
+        setDescriptionInputValue(value);
+        break;
+    }
+    return;
+  };
 
+  const onSubmitHandler = async () => {
     const imgRes = await uploadImage();
     if (!imgRes?.path || !supabase) return;
     const { data: imageUri } = supabase.storage
       .from("membership-nft-images")
       .getPublicUrl(imgRes.path);
 
-    console.log(imageUri);
-    const metadataUri = uploadMetadata();
+    const data = {
+      name: nameInputValue,
+      symbol: symbolInputValue,
+      description: descriptionInputValue,
+      imageUri: imageUri.publicUrl,
+      deployedByAddress: userAddress as string,
+    };
 
-    const communityMembershipAddress = deployCommunityNFT();
+    createCommunity(data);
+
+    // const communityWalletAddress = await createCommunityWallet();
+    // console.log(sessionData?.user.id);
+
+    // const nftMetadataObj = {
+    //   name: "User 1",
+    //   description: "I like to ape into memecoins",
+    //   image: imageUri,
+    // };
+    // // console.log(imageUri);
+    // const metadataUri = uploadMetadata();
+
+    // const communityMembershipAddress = deployCommunityNFT();
   };
 
   return (
@@ -161,8 +220,14 @@ const Create = () => {
         <MinimalistConnectButton connectBtnClasses="w-full rounded-md bg-poc_yellowPrimary-600 py-2 px-6 font-spaceGrotesk text-base font-medium text-white hover:bg-poc_yellowPrimary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_yellowPrimary-600 md:text-lg" />
       ) : (
         <CreateForm
+          isLoading={isLoading || isSubmitting}
           nftImage={nftImage}
           setNftImage={setNftImage}
+          nameInputValue={nameInputValue}
+          symbolInputValue={symbolInputValue}
+          descriptionInputValue={descriptionInputValue}
+          setDescriptionInputValue={setDescriptionInputValue}
+          onChangeHandler={onChangeHandler}
           onSubmitHandler={onSubmitHandler}
         />
       )}

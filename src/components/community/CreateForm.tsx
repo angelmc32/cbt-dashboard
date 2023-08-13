@@ -1,15 +1,27 @@
-import { type Dispatch, type SetStateAction } from "react";
+import { type ChangeEvent, type Dispatch, type SetStateAction } from "react";
 import { FileUploader } from "../file-uploader/FileUploader";
 import NftImageUploader from "../file-uploader/NftImageUploader";
 
 type TCreateFormProps = {
+  isLoading: boolean;
   nftImage: (File & { preview: string }) | null;
   setNftImage: Dispatch<SetStateAction<(File & { preview: string }) | null>>;
+  nameInputValue: string;
+  symbolInputValue: string;
+  descriptionInputValue: string;
+  setDescriptionInputValue: Dispatch<SetStateAction<string>>;
+  onChangeHandler: (event: ChangeEvent<HTMLInputElement>) => void;
   onSubmitHandler: () => Promise<void>;
 };
 const CreateForm = ({
+  isLoading,
   nftImage,
   setNftImage,
+  nameInputValue,
+  symbolInputValue,
+  descriptionInputValue,
+  setDescriptionInputValue,
+  onChangeHandler,
   onSubmitHandler,
 }: TCreateFormProps) => {
   return (
@@ -44,6 +56,8 @@ const CreateForm = ({
               id="name"
               className="block w-full rounded-md border-0 px-4 py-3 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-base placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-poc_yellowPrimary-600 sm:leading-6"
               placeholder="e.g. Degen Frens Club"
+              onChange={onChangeHandler}
+              value={nameInputValue}
             />
           </div>
         </div>
@@ -62,6 +76,8 @@ const CreateForm = ({
               id="symbol"
               className="block w-full rounded-md border-0 px-4 py-3 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-base placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-poc_yellowPrimary-600 sm:leading-6"
               placeholder="e.g. DEGENS"
+              onChange={onChangeHandler}
+              value={symbolInputValue}
             />
           </div>
         </div>
@@ -79,6 +95,10 @@ const CreateForm = ({
               rows={5}
               className="block w-full rounded-md border-0 px-4 py-3 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-base placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-poc_yellowPrimary-600 sm:leading-6"
               placeholder="Tell other people a bit about your community, e.g. Just degens who invest together"
+              onChange={(event) =>
+                setDescriptionInputValue(event.currentTarget.value)
+              }
+              value={descriptionInputValue}
             />
           </div>
         </div>
@@ -87,7 +107,7 @@ const CreateForm = ({
         <button
           type="button"
           className="items-center rounded-md bg-poc_yellowPrimary-600 px-8 py-2.5 text-lg font-semibold text-white hover:bg-poc_yellowPrimary-700"
-          disabled={!nftImage?.preview}
+          disabled={!nftImage?.preview || isLoading}
           onClick={() => void onSubmitHandler()}
         >
           Create!
