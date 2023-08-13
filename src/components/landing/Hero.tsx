@@ -8,7 +8,7 @@ const Hero = () => {
       <div className="mx-auto w-full px-4 md:px-16 lg:mx-0 lg:flex lg:items-start lg:px-12 lg:pt-24 xl:px-16 xl:pt-24">
         <div className="w-full pt-20 md:w-3/4 lg:w-3/5 lg:max-w-xl lg:shrink-0 lg:pt-0 xl:ml-8 xl:max-w-2xl">
           <h3 className="mb-2 text-3xl text-white md:text-4xl md:leading-tight">
-            Connect with your members and boost your engagement
+            The infinite machine of good vibes only
           </h3>
           <h1 className="mb-2 ml-4 text-5xl font-bold text-poc_yellowPrimary-500 md:text-7xl md:leading-none">
             Proof of Community

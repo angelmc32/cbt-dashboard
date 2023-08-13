@@ -13,6 +13,25 @@ export const communitiesRouter = createTRPCRouter({
       });
       return allUserDeployedCommunities;
     }),
+  getOneCommunity: publicProcedure
+    .input(z.object({ communityId: z.string().trim() }))
+    .query(async ({ ctx, input }) => {
+      const { communityId } = input;
+      const community = await ctx.prisma.community.findUnique({
+        where: {
+          id: communityId,
+        },
+        select: {
+          address: true,
+          communityAddress: true,
+          name: true,
+          description: true,
+          members: true,
+          imageUri: true,
+        },
+      });
+      return community;
+    }),
   create: publicProcedure
     .input(
       z.object({
@@ -54,6 +73,29 @@ export const communitiesRouter = createTRPCRouter({
         },
         data: {
           address,
+        },
+      });
+
+      return { updatedCommunity };
+    }),
+  addCommunityMember: publicProcedure
+    .input(
+      z.object({
+        newMemberAddress: z.string().trim().length(42),
+        communityId: z.string().trim(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { newMemberAddress, communityId } = input;
+
+      const updatedCommunity = await ctx.prisma.community.update({
+        where: {
+          id: communityId,
+        },
+        data: {
+          members: {
+            push: newMemberAddress,
+          },
         },
       });
 

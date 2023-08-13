@@ -3,28 +3,54 @@ import { type ExternalProvider } from "@ethersproject/providers";
 import { useAccount } from "wagmi";
 import SimpleLoader from "~/components/common/SimpleLoader";
 import Link from "next/link";
-import SoulboundMembership from "~/contracts/localhost/SoulboundMembership.json";
-import CommunityBoundERC20 from "~/contracts/localhost/CommunityBoundERC20.json";
+import SoulboundMembership from "~/contracts/zora-goerli/SoulboundMembership.json";
+import CommunityBoundERC20 from "~/contracts/zora-goerli/CommunityBoundERC20.json";
 import { api } from "~/utils/api";
 import { type BigNumber, ethers } from "ethers";
-import { useGetTxReceipt } from "~/hooks/useGetTxReceipt";
+
 import toast from "react-hot-toast";
+
+const DEMO_COMMUNITY_ID = "cll92f3170000lig66zxcvhgo";
 
 const Dashboard = () => {
   const [addressInputValue, setAddressInputValue] = useState("");
+  const [CBTvalues, setCBTValues] = useState([23, 7, -23, 10]);
+  const [isLoading, setIsLoading] = useState(false);
+  const communityMembershipAddress =
+    process.env.NEXT_PUBLIC_LOCAL_DEMO_COMMUNITY_MEMBERSHIP_ADDRESS!;
   const [ethereumObj, setEthereumObj] = useState<ExternalProvider | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
   const [currentBalance, setCurrentBalance] = useState<number | null>(null);
-  const [txHashState, setTxHashState] = useState("");
   const [txReceiptState, setTxReceiptState] = useState<unknown>();
   const { address: userAddress } = useAccount();
   const {
-    data: userDeployedCommunities,
-    isLoading,
+    data: demoCommunity,
     isFetching,
-  } = api.communities.getUserDeployedCommunities.useQuery({
-    address: userAddress as string,
+    refetch: refetchDemoCommunity,
+  } = api.communities.getOneCommunity.useQuery({
+    communityId: DEMO_COMMUNITY_ID,
   });
+
+  const { mutate: addCommunityMember } =
+    api.communities.addCommunityMember.useMutation({
+      onSuccess: async ({ updatedCommunity }) => {
+        if (!updatedCommunity) {
+          setIsLoading(false);
+          toast.error(
+            "We were unable to register the new member to the Community"
+          );
+          return;
+        }
+        await refetchDemoCommunity();
+        toast.success("New Member added successfully");
+      },
+      onError: (error: { message: string }) => {
+        console.log(error);
+        const errorMsg = error.message || "Ocurrió un error";
+        setIsLoading(false);
+        console.error(errorMsg);
+      },
+    });
 
   useEffect(() => {
     if (!ethereumObj)
@@ -87,7 +113,47 @@ const Dashboard = () => {
     }
   };
 
-  const checkNftBalanceOfAddress = async () => {
+  const sendCBT = async (toAddress: string, index: number) => {
+    if (!ethereumObj) return;
+    const provider = new ethers.providers.Web3Provider(ethereumObj);
+    const accounts = (await ethereumObj.request?.({
+      method: "eth_requestAccounts",
+    })) as string[];
+    const signer = provider.getSigner(accounts[0]);
+    const CommunityBoundERC20Contract = new ethers.Contract(
+      process.env.NEXT_PUBLIC_LOCAL_CBT_ERC20_ADDRESS!,
+      CommunityBoundERC20.abi,
+      signer
+    );
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const tx = await CommunityBoundERC20Contract.adminMint(
+        toAddress,
+        ethers.utils.parseUnits("3", "ether")
+      );
+      console.log(tx);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (!tx.hash) return;
+
+      if (!CBTvalues) return;
+      const userBalance = CBTvalues[index];
+      if (!userBalance) return;
+      const newCBTValues = [...CBTvalues];
+      newCBTValues[index] = userBalance + 3;
+      console.log(newCBTValues);
+      setCBTValues(newCBTValues);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const txReceipt = await provider.getTransactionReceipt(tx.hash as string);
+      if (txReceipt?.blockNumber) {
+        setTxReceiptState(txReceipt);
+      } else return { data: null, errorMsg: "Something went wrong" };
+    } catch (error) {
+      console.error(error);
+      toast.error("CBT: Cooling period has not ended");
+    }
+  };
+
+  const isMembershipOwner = async () => {
     if (!ethereumObj) return;
     const provider = new ethers.providers.Web3Provider(ethereumObj);
     const accounts = (await ethereumObj.request?.({
@@ -95,23 +161,139 @@ const Dashboard = () => {
     })) as string[];
     const signer = provider.getSigner(accounts[0]);
     const soulboundMembershipContract = new ethers.Contract(
-      process.env.NEXT_PUBLIC_LOCAL_SOULBOUND_MEMBERSHIP_ADDRESS!,
+      communityMembershipAddress,
       SoulboundMembership.abi,
       signer
     );
     try {
+      console.log(addressInputValue);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
       const res: BigNumber = await soulboundMembershipContract.balanceOf(
         addressInputValue
       );
       console.log(res);
       console.log(parseInt(res._hex));
-      return parseInt(res._hex);
+      return parseInt(res._hex) > 0;
     } catch (error) {
       console.error(error);
       toast.error(
         "Unable to check balance of NFT, please double-check the address"
       );
+    }
+  };
+
+  const inviteCommunityMember = async () => {
+    if (!ethereumObj) return;
+    const provider = new ethers.providers.Web3Provider(ethereumObj);
+    const accounts = (await ethereumObj.request?.({
+      method: "eth_requestAccounts",
+    })) as string[];
+    const signer = provider.getSigner(accounts[0]);
+    const CommunityBoundERC20Contract = new ethers.Contract(
+      process.env.NEXT_PUBLIC_LOCAL_CBT_ERC20_ADDRESS!,
+      CommunityBoundERC20.abi,
+      signer
+    );
+    try {
+      const isNewAddressMembershipOwner = await isMembershipOwner();
+      if (!isNewAddressMembershipOwner) {
+        toast.error(
+          "Unable to add member: Entered address is not a Membership holder"
+        );
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const tx = await CommunityBoundERC20Contract.addCommunityMember(
+        addressInputValue,
+        communityMembershipAddress
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (!tx.hash) return;
+
+      setAddressInputValue("");
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const txReceipt = await provider.getTransactionReceipt(tx.hash as string);
+      if (txReceipt?.blockNumber) {
+        setTxReceiptState(txReceipt);
+        addCommunityMember({
+          newMemberAddress: addressInputValue,
+          communityId: DEMO_COMMUNITY_ID,
+        });
+      } else return { data: null, errorMsg: "Something went wrong" };
+    } catch (error) {
+      console.error(error);
+      toast.error("CBT: Cooling period has not ended");
+    }
+  };
+
+  const onboardCommunityMember = async () => {
+    if (!ethereumObj) return;
+    const provider = new ethers.providers.Web3Provider(ethereumObj);
+    const accounts = (await ethereumObj.request?.({
+      method: "eth_requestAccounts",
+    })) as string[];
+    const signer = provider.getSigner(accounts[0]);
+    const CommunityBoundERC20Contract = new ethers.Contract(
+      process.env.NEXT_PUBLIC_LOCAL_CBT_ERC20_ADDRESS!,
+      CommunityBoundERC20.abi,
+      signer
+    );
+
+    const soulboundMembershipContract = new ethers.Contract(
+      communityMembershipAddress,
+      SoulboundMembership.abi,
+      signer
+    );
+    try {
+      const isNewAddressMembershipOwner = await isMembershipOwner();
+      if (isNewAddressMembershipOwner) {
+        toast.error(
+          "Unable to onboard member: Address already is a Membership holder"
+        );
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const sbtTx = await soulboundMembershipContract.safeMint(
+        addressInputValue,
+        "https://bafybeidemy4bh75vx25ln3jcn5tnqb25b5u6q62hqtuy26bbikbddgvizu.ipfs.nftstorage.link/nft-0",
+        { value: ethers.utils.parseEther("0.0000777") }
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (!sbtTx.hash) {
+        toast.error("An error occured while minting Soulbound Membership");
+        return;
+      }
+      setAddressInputValue("");
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const cbtTx = await CommunityBoundERC20Contract.addCommunityMember(
+        addressInputValue,
+        communityMembershipAddress
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (!cbtTx.hash) {
+        toast.error("An error occured while adding member to CBT");
+        return;
+      }
+
+      const newCBTValues = [...CBTvalues];
+      newCBTValues.push(23);
+      console.log(newCBTValues);
+      setCBTValues(newCBTValues);
+
+      const txReceipt = await provider.getTransactionReceipt(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        cbtTx.hash as string
+      );
+      if (txReceipt?.blockNumber) {
+        setTxReceiptState(txReceipt);
+        addCommunityMember({
+          newMemberAddress: addressInputValue,
+          communityId: DEMO_COMMUNITY_ID,
+        });
+      } else return { data: null, errorMsg: "Something went wrong" };
+    } catch (error) {
+      console.error(error);
+      toast.error("CBT: Cooling period has not ended");
     }
   };
 
@@ -163,16 +345,22 @@ const Dashboard = () => {
               </div>
               <div className="flex w-full justify-center gap-x-4">
                 <button
-                  className="w-2/5 rounded-md bg-primary py-2"
-                  onClick={() => void checkNftBalanceOfAddress()}
+                  className="w-1/3 rounded-md bg-primary py-2"
+                  onClick={() => void onboardCommunityMember()}
                 >
-                  Invite
+                  Onboard
                 </button>
                 <button
-                  className="flex w-2/5 items-center justify-center gap-x-2 rounded-md bg-primary py-2"
+                  className="w-1/3 rounded-md bg-primary py-2"
+                  onClick={() => void inviteCommunityMember()}
+                >
+                  Add
+                </button>
+                <button
+                  className="flex w-1/3 items-center justify-center gap-x-2 rounded-md bg-primary py-2"
                   onClick={() => void getDrip()}
                 >
-                  Get Drip{" "}
+                  Drip{" "}
                   <span>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -192,29 +380,29 @@ const Dashboard = () => {
                 </button>
               </div>
             </div>
-            <table className="max-w-full overflow-x-clip">
+            <table className="w-full overflow-x-clip">
               <thead>
                 <tr className="w-full">
                   <th
                     scope="col"
                     className="px-1 py-4 text-center text-lg font-semibold text-gray-900"
                   >
-                    Name
+                    Member
                   </th>
                   <th
                     scope="col"
                     className="px-1 py-4 text-center text-lg font-semibold text-gray-900"
                   >
-                    Wallet
+                    CBT
                   </th>
                   <th
                     scope="col"
                     className="px-1 py-4 text-center text-lg font-semibold text-gray-900"
                   >
-                    NFT
+                    Send
                   </th>
                   <th scope="col" className="relative">
-                    To do
+                    View
                   </th>
                 </tr>
               </thead>
@@ -235,55 +423,49 @@ const Dashboard = () => {
                     </td>
                   </tr>
                 ) : (
-                  userDeployedCommunities?.map((community, index) => (
-                    <tr key={community.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-left text-sm font-medium text-gray-900">
-                        {community.name}
-                      </td>
-                      <td className="whitespace-nowrap px-1 py-4 text-sm text-gray-500">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                          className={`h-8 w-8 ${
-                            community.address ?? index === 0
-                              ? "text-green-700"
-                              : "text-neutral-200"
-                          }`}
+                  demoCommunity?.members &&
+                  (demoCommunity?.members).length > 0 &&
+                  (demoCommunity?.members).map((member, index) => (
+                    <tr key={member}>
+                      <td className="py-4 pl-4 pr-3 text-center text-sm font-medium text-gray-900">
+                        <Link
+                          href={`https://testnet.explorer.zora.energy/address/${member}`}
+                          target="_blank"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"
-                          />
-                        </svg>
+                          <span className="lg:hidden">
+                            {member.slice(0, 6)}...{member.slice(-4)}
+                          </span>
+                          <span className="hidden lg:block">{member}</span>
+                        </Link>
                       </td>
-                      <td className="whitespace-nowrap px-1 py-2 text-sm">
-                        {community.communityAddress ?? index === 0 ? (
-                          <div className="h-10 w-10 rounded-full border-2 border-poc_blueSecondary-500 bg-poc_yellowPrimary-500" />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full border border-dashed border-gray-400 bg-neutral-100" />
-                        )}
+                      <td className="flex items-center justify-center whitespace-nowrap px-1 py-4 text-sm text-gray-500">
+                        {CBTvalues[index]}
+                      </td>
+                      <td className="whitespace-nowrap px-1 text-sm">
+                        <button
+                          className="rounded-md bg-poc_yellowPrimary-600 px-2 py-1.5 text-sm"
+                          onClick={() => void sendCBT(member, index)}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="h-6 w-6"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+                            />
+                          </svg>
+                        </button>
                       </td>
                       <td className="relative flex justify-center py-4 pl-1 pr-4 text-right text-sm font-medium">
-                        {!community.address && index !== 0 ? (
-                          <button className="rounded-md bg-poc_yellowPrimary-600 px-2 py-1.5 text-sm">
-                            Wallet
-                          </button>
-                        ) : !community.communityAddress && index !== 0 ? (
-                          <button className="rounded-md bg-poc_blueSecondary-500 px-2 py-1.5 text-sm text-poc_whiteAlmost">
-                            Membership
-                          </button>
-                        ) : (
-                          <Link
-                            href={`/community/${community.address ?? "demo"}`}
-                            className="px-2 py-1.5 text-sm"
-                          >
-                            Explore
-                          </Link>
-                        )}
+                        <button className="rounded-md bg-poc_yellowPrimary-600 px-2 py-1.5 text-sm">
+                          Profile
+                        </button>
                       </td>
                     </tr>
                   ))

@@ -44,6 +44,7 @@ model Community {
     urlSocialMedias     SocialMediaUrl[]
     urlWebsite          String?
     users               UsersOnCommunities[]
+    members             String[]
     createdAt           DateTime        @default(now())
     updatedAt           DateTime        @updatedAt
 
@@ -59,6 +60,7 @@ model CommunityContract {
     baseUri             String
     community           Community       @relation(fields: [communityId], references: [id])
     communityId         String          @unique
+    owners              String[]
     createdAt           DateTime        @default(now())
     updatedAt           DateTime        @updatedAt
 

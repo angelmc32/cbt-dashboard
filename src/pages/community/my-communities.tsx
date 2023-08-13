@@ -129,7 +129,8 @@ const MyCommunities = () => {
                           </button>
                         ) : (
                           <Link
-                            href={`/community/${community.address ?? "demo"}`}
+                            href="/community/dashboard"
+                            // href={`/community/${community.address ?? "demo"}`}
                             className="px-2 py-1.5 text-sm"
                           >
                             Explore
