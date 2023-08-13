@@ -6,7 +6,7 @@ import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
 
 export const { chains, publicClient } = configureChains(
-  [mainnet, polygon, polygonMumbai, gnosis, goerli],
+  [goerli],
   [
     alchemyProvider({
       apiKey: process.env.NEXT_PUBLIC_ALCHEMY_API_KEY!,

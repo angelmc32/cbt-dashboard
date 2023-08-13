@@ -2,6 +2,17 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 export const communitiesRouter = createTRPCRouter({
+  getUserDeployedCommunities: publicProcedure
+    .input(z.object({ address: z.string().trim().length(42) }))
+    .query(async ({ ctx, input }) => {
+      const { address } = input;
+      const allUserDeployedCommunities = await ctx.prisma.community.findMany({
+        where: {
+          deployedByAddress: address,
+        },
+      });
+      return allUserDeployedCommunities;
+    }),
   create: publicProcedure
     .input(
       z.object({
@@ -26,5 +37,26 @@ export const communitiesRouter = createTRPCRouter({
       });
 
       return { newCommunity };
+    }),
+  addDeployedWallet: publicProcedure
+    .input(
+      z.object({
+        address: z.string().trim().length(42),
+        communityId: z.string().trim(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { address, communityId } = input;
+
+      const updatedCommunity = await ctx.prisma.community.update({
+        where: {
+          id: communityId,
+        },
+        data: {
+          address,
+        },
+      });
+
+      return { updatedCommunity };
     }),
 });

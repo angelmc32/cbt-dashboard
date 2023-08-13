@@ -34,13 +34,21 @@ const Create = () => {
   const { supabase, errorMsg } = useSupabaseClient();
   const { data: sessionData } = useSession();
 
-  const { mutate: createCommunity, isLoading: isSubmitting } =
+  const { mutate: createCommunity, isLoading: isSubmittingCreateCommunity } =
     api.communities.create.useMutation({
       onSuccess: async ({ newCommunity }) => {
-        console.log(newCommunity);
-        console.log("¡Tu comunidad fue registrada exitosamente!");
-        await createCommunityWallet();
-        console.log("¡Tu wallet fue desplegada exitosamente!");
+        if (!newCommunity) return;
+        console.log("¡Tu Community Wallet fue registrada exitosamente!");
+        const communityWalletAddress = await createCommunityWallet();
+        if (!communityWalletAddress) {
+          console.error("Safe wallet deployment failed");
+          return;
+        }
+        console.log("¡Tu Community Wallet fue desplegada exitosamente!");
+        addDeployedWallet({
+          address: communityWalletAddress,
+          communityId: newCommunity.id,
+        });
       },
       onError: (error: { message: string }) => {
         console.log(error);
@@ -49,6 +57,25 @@ const Create = () => {
         console.error(errorMsg);
       },
     });
+
+  const {
+    mutate: addDeployedWallet,
+    isLoading: isSubmittingAddDeployedWallet,
+  } = api.communities.addDeployedWallet.useMutation({
+    onSuccess: ({ updatedCommunity }) => {
+      console.log(updatedCommunity);
+      console.log("¡Tu Community Wallet fue registrada exitosamente!");
+      deploySoulboundMembership();
+      console.log("¡Tu SoulboundMembership fue desplegada exitosamente!");
+      console.log("te mandamos a que acuñes tu membresía");
+    },
+    onError: (error: { message: string }) => {
+      console.log(error);
+      const errorMsg = error.message || "Ocurrió un error";
+      setIsLoading(false);
+      console.error(errorMsg);
+    },
+  });
 
   useEffect(() => {
     if (!hasLoaded) {
@@ -105,6 +132,7 @@ const Create = () => {
 
       const newSafeAddress = await _safeSdk.getAddress();
       console.log(newSafeAddress);
+      return newSafeAddress;
     } catch (error) {
       console.error(error);
     }
@@ -122,7 +150,7 @@ const Create = () => {
       const { data, error } = await supabase.storage
         .from("membership-nft-images")
         .upload(
-          `public/${"community-test"}/${userAddress}-1.png`,
+          `public/${"community-test"}/test-${Date.now()}.png`,
           nftImage as File,
           {
             cacheControl: "3600",
@@ -146,8 +174,8 @@ const Create = () => {
     return;
   };
 
-  const deployCommunityNFT = () => {
-    console.log("uploading image to Supabase");
+  const deploySoulboundMembership = () => {
+    console.log("aquí va el código de ethers");
     return;
   };
 
@@ -220,7 +248,11 @@ const Create = () => {
         <MinimalistConnectButton connectBtnClasses="w-full rounded-md bg-poc_yellowPrimary-600 py-2 px-6 font-spaceGrotesk text-base font-medium text-white hover:bg-poc_yellowPrimary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_yellowPrimary-600 md:text-lg" />
       ) : (
         <CreateForm
-          isLoading={isLoading || isSubmitting}
+          isLoading={
+            isLoading ||
+            isSubmittingAddDeployedWallet ||
+            isSubmittingCreateCommunity
+          }
           nftImage={nftImage}
           setNftImage={setNftImage}
           nameInputValue={nameInputValue}

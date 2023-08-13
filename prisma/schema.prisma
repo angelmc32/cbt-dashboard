@@ -27,14 +27,17 @@ model SocialMediaUrl {
     url                 String
     community           Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
     communityId         String
+
+    @@index([communityId])
 }
 
 model Community {
     id                  String          @id @default(cuid())
     address             String?         @unique
     communityContract   CommunityContract?
+    communityAddress    String?
     deployedByAddress   String
-    name                String          @unique
+    name                String
     symbol              String
     description         String
     imageUri            String
@@ -43,6 +46,8 @@ model Community {
     users               UsersOnCommunities[]
     createdAt           DateTime        @default(now())
     updatedAt           DateTime        @updatedAt
+
+    @@index([address, deployedByAddress, communityAddress, name])
 }
 
 model CommunityContract {
@@ -56,6 +61,8 @@ model CommunityContract {
     communityId         String          @unique
     createdAt           DateTime        @default(now())
     updatedAt           DateTime        @updatedAt
+
+    @@index([address, deployedByAddress, communityId])
 }
 
 model UsersOnCommunities {
@@ -79,6 +86,8 @@ model NftContract {
     status              STATUS          @default(DRAFT)
     createdAt           DateTime        @default(now())
     updatedAt           DateTime        @updatedAt
+
+    @@index([address, deployedByAddress])
 }
 
 model NftMetadata {
@@ -119,4 +128,6 @@ model User {
     urlProfileImg       String?
     accounts            Account[]
     communities         UsersOnCommunities[]
+
+    @@index([address, email, name])
 }

@@ -1,6 +1,7 @@
 import { type ChangeEvent, type Dispatch, type SetStateAction } from "react";
 import { FileUploader } from "../file-uploader/FileUploader";
 import NftImageUploader from "../file-uploader/NftImageUploader";
+import SimpleLoader from "../common/SimpleLoader";
 
 type TCreateFormProps = {
   isLoading: boolean;
@@ -103,14 +104,15 @@ const CreateForm = ({
           </div>
         </div>
       </form>
-      <div className="relative my-6 w-full">
+      <div className="relative my-6 flex w-full justify-center">
         <button
           type="button"
-          className="items-center rounded-md bg-poc_yellowPrimary-600 px-8 py-2.5 text-lg font-semibold text-white hover:bg-poc_yellowPrimary-700"
+          className="flex items-center justify-center gap-x-4 rounded-md bg-poc_yellowPrimary-600 px-8 py-2.5 text-lg font-semibold text-white hover:bg-poc_yellowPrimary-700 disabled:bg-yellow-800"
           disabled={!nftImage?.preview || isLoading}
           onClick={() => void onSubmitHandler()}
         >
-          Create!
+          {isLoading ? "Creating..." : "Create!"}
+          {isLoading && <SimpleLoader />}
         </button>
       </div>
     </>
