@@ -99,7 +99,7 @@ const MyCommunities = () => {
                         strokeWidth={1.5}
                         stroke="currentColor"
                         className={`h-8 w-8 ${
-                          community.address || index === 0
+                          community.address ?? index === 0
                             ? "text-green-700"
                             : "text-neutral-200"
                         }`}
@@ -112,7 +112,7 @@ const MyCommunities = () => {
                       </svg>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm">
-                      {community.communityAddress || index === 0 ? (
+                      {community.communityAddress ?? index === 0 ? (
                         <div className="h-10 w-10 rounded-full border-2 border-poc_blueSecondary-500 bg-poc_yellowPrimary-500" />
                       ) : (
                         <div className="h-10 w-10 rounded-full border border-dashed border-gray-400 bg-neutral-100" />
@@ -129,7 +129,7 @@ const MyCommunities = () => {
                         </button>
                       ) : (
                         <Link
-                          href={`/community/${community.address || "demo"}`}
+                          href={`/community/${community.address ?? "demo"}`}
                           className="px-2 py-1.5 text-sm"
                         >
                           Explore
