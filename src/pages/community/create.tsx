@@ -14,6 +14,8 @@ import useSupabaseClient from "~/hooks/useSupabaseClient";
 
 import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
+import toast from "react-hot-toast";
+import { useRouter } from "next/router";
 
 const Create = () => {
   const [ethereumObj, setEthereumObj] = useState<ExternalProvider | null>(null);
@@ -31,24 +33,36 @@ const Create = () => {
     useState<string>("");
 
   const { address: userAddress } = useAccount();
+  const router = useRouter();
   const { supabase, errorMsg } = useSupabaseClient();
   const { data: sessionData } = useSession();
 
   const { mutate: createCommunity, isLoading: isSubmittingCreateCommunity } =
     api.communities.create.useMutation({
       onSuccess: async ({ newCommunity }) => {
-        if (!newCommunity) return;
-        console.log("¡Tu Community Wallet fue registrada exitosamente!");
-        const communityWalletAddress = await createCommunityWallet();
-        if (!communityWalletAddress) {
-          console.error("Safe wallet deployment failed");
+        if (!newCommunity) {
+          setIsLoading(false);
+          toast.error("We were unable to deploy your Safe");
           return;
         }
-        console.log("¡Tu Community Wallet fue desplegada exitosamente!");
-        addDeployedWallet({
-          address: communityWalletAddress,
-          communityId: newCommunity.id,
+        toast.success("Started Community creation process successfully");
+        toast("Deploying Community Wallet (Safe CBT Multisig)...", {
+          duration: 10000,
         });
+        const communityWalletAddress = await createCommunityWallet();
+        if (!communityWalletAddress) {
+          setIsLoading(false);
+          toast.error("We were unable to deploy your Safe");
+          console.error("Safe wallet deployment failed");
+          return;
+        } else {
+          toast.success(`Wallet deployed to ${communityWalletAddress}`);
+          toast("Saving Community Wallet information...");
+          addDeployedWallet({
+            address: communityWalletAddress,
+            communityId: newCommunity.id,
+          });
+        }
       },
       onError: (error: { message: string }) => {
         console.log(error);
@@ -63,11 +77,13 @@ const Create = () => {
     isLoading: isSubmittingAddDeployedWallet,
   } = api.communities.addDeployedWallet.useMutation({
     onSuccess: ({ updatedCommunity }) => {
-      console.log(updatedCommunity);
-      console.log("¡Tu Community Wallet fue registrada exitosamente!");
-      deploySoulboundMembership();
-      console.log("¡Tu SoulboundMembership fue desplegada exitosamente!");
-      console.log("te mandamos a que acuñes tu membresía");
+      if (!updatedCommunity) {
+        setIsLoading(false);
+        toast.error("We were unable to register the Community Wallet");
+        return;
+      }
+      toast.success("Community Wallet registered successfully!");
+      void router.push("/community/my-communities");
     },
     onError: (error: { message: string }) => {
       console.log(error);
@@ -139,13 +155,13 @@ const Create = () => {
   };
 
   const uploadImage = async () => {
-    console.log("uploading image to Supabase");
-    if (!supabase) return;
-    if (errorMsg) {
+    toast("Uploading image...");
+    if (!supabase || errorMsg) {
+      setIsLoading(false);
       console.error(errorMsg);
+      toast.error("We were unable to start the process, try again later");
       return;
     }
-    console.log(nftImage);
     try {
       const { data, error } = await supabase.storage
         .from("membership-nft-images")
@@ -158,10 +174,10 @@ const Create = () => {
           }
         );
       if (error) {
+        setIsLoading(false);
         console.error(error);
       } else {
-        console.log("Success!");
-        console.log(data);
+        console.log("Image upload successful:", data);
         return data;
       }
     } catch (error) {
@@ -196,8 +212,15 @@ const Create = () => {
   };
 
   const onSubmitHandler = async () => {
+    toast("Registering Community...");
+    setIsLoading(true);
     const imgRes = await uploadImage();
-    if (!imgRes?.path || !supabase) return;
+    if (!imgRes?.path || !supabase) {
+      setIsLoading(false);
+      toast.error("Unable to upload the image, try again later");
+      return;
+    }
+    toast.success("Image upload successful");
     const { data: imageUri } = supabase.storage
       .from("membership-nft-images")
       .getPublicUrl(imgRes.path);
@@ -231,38 +254,26 @@ const Create = () => {
       <h1 className="mb-8 text-center text-poc_yellowPrimary-700">
         Create Community
       </h1>
-      {/* <div className="flex gap-x-4">
-        <button className="btn btn-sm rounded-md" onClick={logSdkObj}>
-          Log SDK obj
-        </button>
-        {isConnected && (
-          <button
-            className="btn btn-sm rounded-md"
-            onClick={() => void createCommunityWallet()}
-          >
-            Create Wallet
-          </button>
-        )}
-      </div> */}
-      {!userAddress ? (
-        <MinimalistConnectButton connectBtnClasses="w-full rounded-md bg-poc_yellowPrimary-600 py-2 px-6 font-spaceGrotesk text-base font-medium text-white hover:bg-poc_yellowPrimary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_yellowPrimary-600 md:text-lg" />
-      ) : (
-        <CreateForm
-          isLoading={
-            isLoading ||
-            isSubmittingAddDeployedWallet ||
-            isSubmittingCreateCommunity
-          }
-          nftImage={nftImage}
-          setNftImage={setNftImage}
-          nameInputValue={nameInputValue}
-          symbolInputValue={symbolInputValue}
-          descriptionInputValue={descriptionInputValue}
-          setDescriptionInputValue={setDescriptionInputValue}
-          onChangeHandler={onChangeHandler}
-          onSubmitHandler={onSubmitHandler}
-        />
-      )}
+      {hasLoaded &&
+        (!userAddress ? (
+          <MinimalistConnectButton connectBtnClasses="w-full rounded-md bg-poc_yellowPrimary-600 py-2 px-6 font-spaceGrotesk text-base font-medium text-white hover:bg-poc_yellowPrimary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-poc_yellowPrimary-600 md:text-lg" />
+        ) : (
+          <CreateForm
+            isLoading={
+              isLoading ||
+              isSubmittingAddDeployedWallet ||
+              isSubmittingCreateCommunity
+            }
+            nftImage={nftImage}
+            setNftImage={setNftImage}
+            nameInputValue={nameInputValue}
+            symbolInputValue={symbolInputValue}
+            descriptionInputValue={descriptionInputValue}
+            setDescriptionInputValue={setDescriptionInputValue}
+            onChangeHandler={onChangeHandler}
+            onSubmitHandler={onSubmitHandler}
+          />
+        ))}
     </div>
   );
 };
