@@ -14,24 +14,55 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+enum STATUS {
+    DEPLOYED
+    DRAFT
+    ERROR
+    PROCESSING
+}
+
 model SocialMediaUrl {
     id                  String          @id @default(cuid())
     platformName        String          @unique
     url                 String
     community           Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
     communityId         String
+
+    @@index([communityId])
 }
 
 model Community {
     id                  String          @id @default(cuid())
     address             String?         @unique
-    name                String          @unique
-    description         String?
+    communityContract   CommunityContract?
+    communityAddress    String?
+    deployedByAddress   String
+    name                String
+    symbol              String
+    description         String
+    imageUri            String
     urlSocialMedias     SocialMediaUrl[]
     urlWebsite          String?
     users               UsersOnCommunities[]
     createdAt           DateTime        @default(now())
     updatedAt           DateTime        @updatedAt
+
+    @@index([address, deployedByAddress, communityAddress, name])
+}
+
+model CommunityContract {
+    id                  String          @id @default(cuid())
+    address             String?         @unique
+    deployedByAddress   String
+    name                String
+    symbol              String
+    baseUri             String
+    community           Community       @relation(fields: [communityId], references: [id])
+    communityId         String          @unique
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    @@index([address, deployedByAddress, communityId])
 }
 
 model UsersOnCommunities {
@@ -43,6 +74,30 @@ model UsersOnCommunities {
   assignedBy            String
 
   @@id([userId, communityId])
+}
+
+model NftContract {
+    id                  String          @id @default(cuid())
+    address             String?         @unique
+    deployedByAddress   String
+    name                String
+    symbol              String
+    baseUri             String
+    status              STATUS          @default(DRAFT)
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    @@index([address, deployedByAddress])
+}
+
+model NftMetadata {
+    id                  String          @id @default(cuid())
+    name                String
+    description         String
+    imageUrl            String
+    externalUrl         String
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
 }
 
 // Necessary for Next auth
@@ -73,4 +128,6 @@ model User {
     urlProfileImg       String?
     accounts            Account[]
     communities         UsersOnCommunities[]
+
+    @@index([address, email, name])
 }

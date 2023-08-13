@@ -83,16 +83,13 @@ export const authOptions: (ctxReq: CtxOrReq) => NextAuthOptions = ({
           );
           const nonce = await getCsrfToken({ req: { headers: req?.headers } });
           if (
-            !env.NEXTAUTH_URL.includes("https://") &&
-            !env.NEXTAUTH_URL.includes("http://")
+            process.env.VERCEL ??
+            (!env.NEXTAUTH_URL.includes("https://") &&
+              !env.NEXTAUTH_URL.includes("http://"))
           ) {
-            console.log(env.NEXTAUTH_URL);
             envNextAuthUrl = "https://" + env.NEXTAUTH_URL;
           }
           const nextAuthUrl = new URL(envNextAuthUrl);
-          // const nextAuthUrl = new URL(
-          //   "https://" + process.env.NEXT_PUBLIC_VERCEL_URL!
-          // );
 
           const result = await siwe.verify({
             signature: credentials?.signature ?? "",
